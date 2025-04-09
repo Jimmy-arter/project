@@ -1,7 +1,7 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { LogOut } from 'lucide-react';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { LogOut } from "lucide-react";
 
 export default function Navbar() {
   const { currentUser, logout, userRole } = useAuth();
@@ -10,9 +10,9 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/login');
+      navigate("/login");
     } catch (error) {
-      console.error('Failed to log out', error);
+      console.error("Failed to log out", error);
     }
   };
 
@@ -24,7 +24,7 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <span className="text-xl font-semibold text-white">
-              Health Appointment System
+              Online Health System
             </span>
           </div>
           <div className="flex items-center space-x-4">

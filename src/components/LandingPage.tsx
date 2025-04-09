@@ -169,7 +169,7 @@ const LandingPage = () => {
                 }
               }}
             >
-              Healthcare Management System
+              Online Doctor Appointment Booking System
             </h1>
             
             <p 

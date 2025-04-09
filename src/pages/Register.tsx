@@ -1,44 +1,44 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
-import { UserPlus } from 'lucide-react';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import { doc, setDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { UserPlus } from "lucide-react";
 
 export default function Register() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [role, setRole] = useState('patient');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("patient");
+  const [error, setError] = useState("");
   const { signup } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setError('');
+      setError("");
       const { user } = await signup(email, password);
-      await setDoc(doc(db, 'users', user.uid), {
+      await setDoc(doc(db, "users", user.uid), {
         email,
         role,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
       });
-      
+
       switch (role) {
-        case 'patient':
-          navigate('/patient-dashboard');
+        case "patient":
+          navigate("/patient-dashboard");
           break;
-        case 'doctor':
-          navigate('/doctor-dashboard');
+        case "doctor":
+          navigate("/doctor-dashboard");
           break;
-        case 'admin':
-          navigate('/admin-dashboard');
+        case "admin":
+          navigate("/admin-dashboard");
           break;
         default:
-          navigate('/patient-dashboard');
+          navigate("/patient-dashboard");
       }
     } catch (err) {
-      setError('Failed to create an account');
+      setError("Failed to create an account");
     }
   };
 
@@ -50,10 +50,17 @@ export default function Register() {
             <UserPlus className="h-12 w-12 text-blue-600" />
           </div>
           <h2 className="text-center text-2xl font-bold mb-6">Sign Up</h2>
-          {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
           <form onSubmit={handleSubmit}>
             <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
+              <label
+                className="block text-gray-700 text-sm font-bold mb-2"
+                htmlFor="email"
+              >
                 Email
               </label>
               <input
@@ -66,7 +73,10 @@ export default function Register() {
               />
             </div>
             <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">
+              <label
+                className="block text-gray-700 text-sm font-bold mb-2"
+                htmlFor="password"
+              >
                 Password
               </label>
               <input
@@ -79,7 +89,10 @@ export default function Register() {
               />
             </div>
             <div className="mb-6">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="role">
+              <label
+                className="block text-gray-700 text-sm font-bold mb-2"
+                htmlFor="role"
+              >
                 Role
               </label>
               <select
@@ -89,8 +102,6 @@ export default function Register() {
                 onChange={(e) => setRole(e.target.value)}
               >
                 <option value="patient">Patient</option>
-                <option value="doctor">Doctor</option>
-                <option value="admin">Admin</option>
               </select>
             </div>
             <button
