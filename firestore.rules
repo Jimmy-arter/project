@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function hasRole(role) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      // Allow public read access for doctors only
+      allow read: if 
+        // Allow authenticated users to read all user documents
+        isAuthenticated() ||
+        // Allow public read access only for doctor profiles
+        (resource.data.role == 'doctor' && resource.data.isActive == true);
+        
+      allow create: if isAuthenticated();
+      allow update, delete: if isOwner(userId) || hasRole('admin');
+
+      // Add index for doctor queries
+      allow list: if 
+        // Allow listing active doctors without authentication
+        (request.query.limit <= 50 && 
+         request.query.filters.size == 2 && 
+         request.query.filters[0].op == '==' && 
+         request.query.filters[0].field == 'role' && 
+         request.query.filters[0].value == 'doctor' &&
+         request.query.filters[1].op == '==' && 
+         request.query.filters[1].field == 'isActive' && 
+         request.query.filters[1].value == true) ||
+        // Allow authenticated users to list users
+        isAuthenticated();
+    }
+
+    // Appointments collection
+    match /appointments/{appointmentId} {
+      allow read: if isAuthenticated() &&
+        (
+          request.auth.uid == resource.data.patientId ||
+          request.auth.uid == resource.data.doctorId ||
+          hasRole('admin')
+        );
+      
+      allow create: if isAuthenticated() &&
+        (
+          request.auth.uid == request.resource.data.patientId ||
+          hasRole('admin')
+        );
+      
+      allow update: if isAuthenticated() &&
+        (
+          request.auth.uid == resource.data.patientId ||
+          request.auth.uid == resource.data.doctorId ||
+          hasRole('admin')
+        );
+      
+      allow delete: if isAuthenticated() && hasRole('admin');
+    }
+  }
+}
