@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  onSnapshot,
+  doc,
+  getDoc,
+  deleteDoc,
+  setDoc
+} from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Calendar, Clock, User, AlertCircle } from 'lucide-react';
@@ -32,19 +43,18 @@ const PatientDashboard = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleteReason, setDeleteReason] = useState('');
+  const [appointmentToDelete, setAppointmentToDelete] = useState<Appointment | null>(null);
 
   useEffect(() => {
     if (!currentUser) return;
 
-    // Fetch doctors
     const fetchDoctors = async () => {
       try {
         const doctorsRef = collection(db, 'users');
         const q = query(doctorsRef, where('role', '==', 'doctor'));
         const querySnapshot = await getDocs(q);
-        if (querySnapshot.empty) {
-          console.warn('No doctors found!');
-        }
         const doctorsList = querySnapshot.docs.map(docSnap => ({
           id: docSnap.id,
           ...docSnap.data()
@@ -56,18 +66,16 @@ const PatientDashboard = () => {
       }
     };
 
-    // Subscribe to appointments with error handling
     const fetchAppointments = () => {
       try {
         const appointmentsRef = collection(db, 'appointments');
         const q = query(appointmentsRef, where('patientId', '==', currentUser.uid));
-        
+
         return onSnapshot(
           q,
           async (snapshot) => {
             const appointmentsPromises = snapshot.docs.map(async (docSnap) => {
               const data = docSnap.data();
-              // Fetch doctor's name from the users collection
               const doctorDoc = await getDoc(doc(db, 'users', data.doctorId));
               const doctorName = doctorDoc.exists()
                 ? doctorDoc.data().name || doctorDoc.data().email
@@ -109,7 +117,6 @@ const PatientDashboard = () => {
     setError('');
     setSuccess('');
 
-    // Validate date
     const selectedDate = new Date(date);
     if (isBefore(selectedDate, startOfDay(new Date()))) {
       setError('Please select a future date');
@@ -117,7 +124,6 @@ const PatientDashboard = () => {
     }
 
     try {
-      // Get doctor's name for the appointment
       const doctorDoc = await getDoc(doc(db, 'users', selectedDoctor));
       const doctorName = doctorDoc.exists()
         ? doctorDoc.data().name || doctorDoc.data().email
@@ -144,6 +150,39 @@ const PatientDashboard = () => {
     }
   };
 
+  const handleDeleteClick = (appointment: Appointment) => {
+    setAppointmentToDelete(appointment);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!appointmentToDelete || !deleteReason.trim()) {
+      setError('Please provide a reason for deleting the appointment');
+      return;
+    }
+
+    try {
+      const logData = {
+        appointmentId: appointmentToDelete.id,
+        patientId: currentUser?.uid,
+        doctorId: appointmentToDelete.doctorId,
+        reason: deleteReason,
+        deletedAt: new Date().toISOString()
+      };
+
+      await setDoc(doc(db, 'deletedAppointments', appointmentToDelete.id), logData);
+      await deleteDoc(doc(db, 'appointments', appointmentToDelete.id));
+
+      setAppointments(prev => prev.filter(a => a.id !== appointmentToDelete.id));
+      setIsModalOpen(false);
+      setDeleteReason('');
+      setSuccess('Appointment deleted successfully.');
+    } catch (err) {
+      console.error('Failed to delete appointment:', err);
+      setError('Failed to delete appointment. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -155,7 +194,6 @@ const PatientDashboard = () => {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Appointments List */}
         <div className="bg-white rounded-lg shadow-lg transition-transform hover:scale-[1.02] duration-300">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-2xl font-bold text-gray-800 flex items-center">
@@ -202,12 +240,47 @@ const PatientDashboard = () => {
                         {format(new Date(`${appointment.date} ${appointment.time}`), 'PPp')}
                       </span>
                     </div>
+                    <button
+                      className="mt-4 text-red-500 hover:text-red-700"
+                      onClick={() => handleDeleteClick(appointment)}
+                    >
+                      Delete Appointment
+                    </button>
                   </div>
                 ))}
               </div>
             )}
           </div>
+
+          {isModalOpen && (
+            <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
+              <div className="bg-white rounded-lg p-6 w-96">
+                <h3 className="text-xl font-semibold">Please provide a reason for deleting:</h3>
+                <textarea
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  className="w-full mt-4 p-2 border border-gray-300 rounded-lg"
+                  rows={4}
+                ></textarea>
+                <div className="mt-4 flex justify-end space-x-4">
+                  <button
+                    className="bg-gray-500 text-white px-4 py-2 rounded-lg"
+                    onClick={() => setIsModalOpen(false)}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="bg-red-500 text-white px-4 py-2 rounded-lg"
+                    onClick={handleDeleteConfirm}
+                  >
+                    Confirm Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+
 
         {/* Book Appointment Form */}
         <div className="bg-white rounded-lg shadow-lg transition-transform hover:scale-[1.02] duration-300">

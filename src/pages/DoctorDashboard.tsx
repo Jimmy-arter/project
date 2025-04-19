@@ -1,135 +1,115 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
-import { User, Appointment } from '../types';
+import { DayPicker } from 'react-day-picker';
+import { format, startOfDay, endOfDay } from 'date-fns';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../../lib/firebase';
+import { Calendar, Clock, User, CalendarX } from 'lucide-react';
+import type { Appointment } from '../../types';
 
-const AdminDashboard = () => {
-  const [users, setUsers] = useState<User[]>([]);
+const DoctorDashboard = () => {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [activeTab, setActiveTab] = useState<'users' | 'appointments'>('users');
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      // Fetch users
-      const usersSnapshot = await getDocs(collection(db, 'users'));
-      const usersList = usersSnapshot.docs.map(doc => ({ ...doc.data(), uid: doc.id } as User));
-      setUsers(usersList);
+    const fetchAppointments = async () => {
+      try {
+        setLoading(true);
+        const start = startOfDay(selectedDate);
+        const end = endOfDay(selectedDate);
 
-      // Fetch appointments
-      const appointmentsSnapshot = await getDocs(collection(db, 'appointments'));
-      const appointmentsList = appointmentsSnapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Appointment));
-      setAppointments(appointmentsList);
+        const appointmentsQuery = query(
+          collection(db, 'appointments'),
+          where('date', '>=', start),
+          where('date', '<=', end)
+        );
+
+        const querySnapshot = await getDocs(appointmentsQuery);
+
+        const fetchedAppointments = querySnapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            date: data.date.toDate(),
+            status: data.status,
+            patientName: data.patientName
+          } as Appointment;
+        });
+
+        // Sort appointments by time
+        fetchedAppointments.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+        setAppointments(fetchedAppointments);
+      } catch (error) {
+        console.error('Error fetching appointments:', error);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchData();
-  }, []);
+    fetchAppointments();
+  }, [selectedDate]);
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
-      
-      <div className="mb-6">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex">
-            <button
-              className={`py-4 px-6 ${
-                activeTab === 'users'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setActiveTab('users')}
-            >
-              Users
-            </button>
-            <button
-              className={`py-4 px-6 ${
-                activeTab === 'appointments'
-                  ? 'border-b-2 border-blue-500 text-blue-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setActiveTab('appointments')}
-            >
-              Appointments
-            </button>
-          </nav>
+    <div className="container mx-auto px-4 py-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* Calendar */}
+        <div className="bg-white p-6 rounded-xl shadow-md">
+          <h2 className="text-2xl font-bold mb-6">Appointment Calendar</h2>
+          <DayPicker
+            mode="single"
+            selected={selectedDate}
+            onSelect={(date) => date && setSelectedDate(date)}
+            className="border rounded-lg p-4"
+          />
+        </div>
+
+        {/* Appointments List */}
+        <div className="bg-white p-6 rounded-xl shadow-md">
+          <h2 className="text-2xl font-bold mb-6">Appointments on {format(selectedDate, 'PPP')}</h2>
+
+          <div className="space-y-4">
+            {loading ? (
+              <p className="text-gray-500">Loading appointments...</p>
+            ) : appointments.length ? (
+              appointments.map((appointment) => (
+                <div
+                  key={appointment.id}
+                  className="border rounded-lg p-4 hover:bg-gray-50 transition">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <User className="text-gray-500" />
+                      <span className="font-medium">{appointment.patientName}</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Clock className="text-gray-500" />
+                      <span>{format(appointment.date, 'HH:mm')}</span>
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    <span className={`px-2 py-1 rounded-full text-sm ${
+                      appointment.status === 'accepted'
+                        ? 'bg-green-100 text-green-800'
+                        : appointment.status === 'rejected'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-yellow-100 text-yellow-800'
+                    }`}>
+                      {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                    </span>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-gray-500 flex items-center gap-2 mt-4">
+                <CalendarX className="w-5 h-5" />
+                No appointments for this date.
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
-      {activeTab === 'users' && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-semibold mb-4">Users</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-6 py-3 text-left">Name</th>
-                  <th className="px-6 py-3 text-left">Email</th>
-                  <th className="px-6 py-3 text-left">Role</th>
-                  <th className="px-6 py-3 text-left">Specialization</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((user) => (
-                  <tr key={user.uid} className="border-t">
-                    <td className="px-6 py-4">{user.name}</td>
-                    <td className="px-6 py-4">{user.email}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded ${
-                        user.role === 'doctor' ? 'bg-blue-100 text-blue-800' :
-                        user.role === 'admin' ? 'bg-purple-100 text-purple-800' :
-                        'bg-green-100 text-green-800'
-                      }`}>
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">{user.specialization || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {activeTab === 'appointments' && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h2 className="text-2xl font-semibold mb-4">Appointments</h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-6 py-3 text-left">Patient</th>
-                  <th className="px-6 py-3 text-left">Doctor</th>
-                  <th className="px-6 py-3 text-left">Date</th>
-                  <th className="px-6 py-3 text-left">Time</th>
-                  <th className="px-6 py-3 text-left">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.map((appointment) => (
-                  <tr key={appointment.id} className="border-t">
-                    <td className="px-6 py-4">{appointment.patientName}</td>
-                    <td className="px-6 py-4">{appointment.doctorName}</td>
-                    <td className="px-6 py-4">{appointment.date}</td>
-                    <td className="px-6 py-4">{appointment.time}</td>
-                    <td className="px-6 py-4">
-                      <span className={`px-2 py-1 rounded ${
-                        appointment.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                        appointment.status === 'cancelled' ? 'bg-red-100 text-red-800' :
-                        'bg-yellow-100 text-yellow-800'
-                      }`}>
-                        {appointment.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-export default AdminDashboard;
+export default DoctorDashboard;
