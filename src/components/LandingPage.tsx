@@ -8,7 +8,15 @@ import {
   Stethoscope, Brain, Eye, Bone, Heart as HeartIcon, 
   Settings as Lungs, Plus, Phone, Mail 
 } from 'lucide-react';
-import sampleDoctors from '../data/sampleDoctors';
+import {
+  ShieldCheck,
+  Clock,
+  Lock,
+  Smartphone,
+  Search,
+  Calendar as CalIcon,
+  CheckCircle
+} from 'lucide-react'
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -265,85 +273,51 @@ const LandingPage = () => {
             </div>
 
             {/* Doctors Section */}
-            <div className="relative max-w-7xl mx-auto px-4 mb-16">
-              <h2 className="text-3xl font-bold text-white mb-8">Available Medical Professionals</h2>
-              
-              {/* Scroll Arrows */}
-              {showLeftArrow && (
-                <button
-                  onClick={() => scroll('left')}
-                  className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white/10 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300"
-                >
-                  <ChevronLeft className="w-6 h-6 text-white" />
-                </button>
-              )}
-              {showRightArrow && (
-                <button
-                  onClick={() => scroll('right')}
-                  className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white/10 backdrop-blur-sm p-2 rounded-full shadow-lg hover:bg-white/20 transition-all duration-300"
-                >
-                  <ChevronRight className="w-6 h-6 text-white" />
-                </button>
-              )}
-
-              {/* Doctors Cards Container */}
-              <div
-                ref={scrollContainerRef}
-                onScroll={handleScroll}
-                className="flex overflow-x-auto hide-scrollbar gap-6 pb-4 px-4 -mx-4"
-                style={{
-                  scrollSnapType: 'x mandatory',
-                  scrollBehavior: 'smooth'
-                }}
-              >
-                {sampleDoctors.map((doctor, index) => (
-                  <div
-                    key={index}
-                    className="flex-none w-[300px] bg-glass rounded-xl shadow-lg overflow-hidden transform hover:scale-105 transition-all duration-300"
-                    style={{ scrollSnapAlign: 'start' }}
-                  >
-                    <div className="relative group">
-                      <div className="w-[300px] h-[300px] overflow-hidden">
-                        <img
-                          src={doctor.profilePhotoUrl}
-                          alt={doctor.name}
-                          className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-300"
-                        />
+            <div className="min-h-screen bg-gradient-to-br from-blue-900 to-purple-800 flex items-center justify-center p-4">
+              <div className="max-w-4xl w-full">
+                {/* Key Benefits Section */}
+                <section className="mb-16">
+                  <h2 className="text-3xl sm:text-4xl font-bold text-white text-center mb-8">Key Benefits</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+                    {[
+                      { icon: <ShieldCheck className="w-6 h-6 text-white" />, title: 'Verified Professionals', desc: 'Background‑checked and licensed.' },
+                      { icon: <Clock className="w-6 h-6 text-white" />, title: 'Real‑time Availability', desc: 'See open slots instantly.' },
+                      { icon: <Lock className="w-6 h-6 text-white" />, title: 'Secure & HIPAA‑Compliant', desc: 'Your data stays private.' },
+                      { icon: <Smartphone className="w-6 h-6 text-white" />, title: 'Flexible Booking', desc: 'In‑person or telehealth.' }
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-start space-x-4 bg-white/10 p-4 rounded-xl shadow-lg">
+                        <div className="p-3 bg-blue-600 rounded-full">
+                          {item.icon}
+                        </div>
+                        <div>
+                          <h3 className="text-lg sm:text-xl font-semibold text-white mb-1">{item.title}</h3>
+                          <p className="text-sm sm:text-base text-white/80">{item.desc}</p>
+                        </div>
                       </div>
-                      <div className="absolute top-4 right-4 bg-white p-2 rounded-full shadow-lg transform rotate-0 group-hover:rotate-180 transition-all duration-300">
-                        {getSpecialtyIcon(doctor.specialization)}
-                      </div>
-                      <div className="absolute bottom-4 right-4 bg-green-500 px-3 py-1 rounded-full text-white text-sm">
-                        Available
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <h3 className="text-xl font-semibold text-white mb-2">{doctor.name}</h3>
-                      <p className="text-blue-300 font-medium mb-3">{doctor.specialization}</p>
-                      <div className="space-y-2 text-white/70">
-                        <p className="flex items-center">
-                          <Phone className="w-4 h-4 mr-2" />
-                          {doctor.phone}
-                        </p>
-                        <p className="flex items-center">
-                          <Mail className="w-4 h-4 mr-2" />
-                          {doctor.email}
-                        </p>
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                </section>
 
-                {/* View All Doctors Button */}
-                <div className="flex-none w-[300px] bg-gradient-to-br from-blue-500/20 to-purple-500/20 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden flex items-center justify-center transform hover:scale-105 transition-all duration-300 cursor-pointer">
-                  <div className="text-center p-6">
-                    <div className="bg-white/10 p-4 rounded-full inline-block mb-4">
-                      <Plus className="w-8 h-8 text-white" />
-                    </div>
-                    <h3 className="text-xl font-semibold text-white mb-2">View All Doctors</h3>
-                    <p className="text-white/70">Explore our complete medical team</p>
+                {/* How It Works Section */}
+                <section>
+                  <h2 className="text-3xl sm:text-4xl font-bold text-white text-center mb-8">How It Works</h2>
+                  <div className="flex flex-col sm:flex-row sm:space-x-6 space-y-6 sm:space-y-0">
+                    {[
+                      { step: 1, title: 'Search', desc: 'Find your specialty & doctor.', icon: <Search className="w-8 h-8 text-white" /> },
+                      { step: 2, title: 'Select', desc: 'Pick a date/time.', icon: <CalIcon className="w-8 h-8 text-white" /> },
+                      { step: 3, title: 'Confirm', desc: 'Get instant updates.', icon: <CheckCircle className="w-8 h-8 text-white" /> }
+                    ].map(({ step, title, desc, icon }) => (
+                      <div key={step} className="flex-1 bg-white/10 p-6 rounded-xl shadow-lg text-center">
+                        <div className="mx-auto w-12 h-12 mb-4 flex items-center justify-center bg-purple-600 rounded-full">
+                          {icon}
+                        </div>
+                        <div className="text-white font-bold text-2xl mb-2">Step {step}</div>
+                        <h3 className="text-xl font-semibold text-white mb-1">{title}</h3>
+                        <p className="text-white/80">{desc}</p>
+                      </div>
+                    ))}
                   </div>
-                </div>
+                </section>
               </div>
             </div>
 
