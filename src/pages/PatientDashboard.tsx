@@ -7,13 +7,13 @@ import { format, isBefore, startOfDay, parse } from 'date-fns';
 
 // Specializations list
 const specializations = [
-  { value: 'cardiology', label: 'Cardiology' },
-  { value: 'dermatology', label: 'Dermatology' },
-  { value: 'neurology', label: 'Neurology' },
-  { value: 'pediatrics', label: 'Pediatrics' },
-  { value: 'orthopedics', label: 'Orthopedics' },
-  { value: 'psychiatry', label: 'Psychiatry' },
-  { value: 'radiology', label: 'Radiology' }
+  { value: 'cardiology', label: 'Cardiology - Diagnosis and treatment of heart conditions' },
+  { value: 'dermatology', label: 'Dermatology - Skin, hair, and nail disorders' },
+  { value: 'neurology', label: 'Neurology - Disorders of the nervous system' },
+  { value: 'pediatrics', label: 'Pediatrics - Medical care of infants and children' },
+  { value: 'orthopedics', label: 'Orthopedics - Musculoskeletal system issues' },
+  { value: 'psychiatry', label: 'Psychiatry - Mental health and behavioral disorders' },
+  { value: 'radiology', label: 'Radiology - Medical imaging and diagnostics' }
 ];
 
 interface Appointment {
